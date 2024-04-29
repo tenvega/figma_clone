@@ -5,6 +5,8 @@ import { useCallback, useState, useEffect } from 'react';
 import CursorChat from './cursor/CursorChat';
 import { CursorMode, CursorState, Reaction } from '@/types/type';
 import ReactionSelector from './reaction/ReactionButton';
+import FlyingReaction from './reaction/FlyingReaction';
+import useInterval from '@/hooks/useInterval';
 
 
 
@@ -18,7 +20,18 @@ const Live = () => {
 
     })
 
-    const [reactions, setReactions] = useState<Reaction[]>([])
+    const [reaction, setReactions] = useState<Reaction[]>([])
+
+    useInterval(() => {
+        if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {
+            setReactions((reactions) => reactions.concat([{
+                point: { x: cursor.x, y: cursor.y },
+                value: cursorState.reaction,
+                timestamp: Date.now(),
+            }]))
+        }
+    }, 100)
+
 
 
 
@@ -102,6 +115,16 @@ const Live = () => {
             onPointerUp={handlePointerUp}
             className="h-[100vh] w-full flex justify-center items-center text-center">
             <h1 className="text-2xl text-white">Liveblocks Figma Clone</h1>
+
+            {reaction.map((r) => (
+                <FlyingReaction
+                    key={r.timestamp.toString()}
+                    x={r.point.x}
+                    y={r.point.y}
+                    timestamp={r.timestamp}
+                    value={r.value}
+                />
+            ))}
 
             {cursor && (
                 <CursorChat
