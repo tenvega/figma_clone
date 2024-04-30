@@ -1,9 +1,9 @@
 "use client"
-import { useMyPresence, useOthers } from '@/liveblocks.config';
+import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from '@/liveblocks.config';
 import LiveCursors from './cursor/LiveCursors'
 import { useCallback, useState, useEffect } from 'react';
 import CursorChat from './cursor/CursorChat';
-import { CursorMode, CursorState, Reaction } from '@/types/type';
+import { CursorMode, CursorState, Reaction, ReactionEvent } from '@/types/type';
 import ReactionSelector from './reaction/ReactionButton';
 import FlyingReaction from './reaction/FlyingReaction';
 import useInterval from '@/hooks/useInterval';
@@ -22,6 +22,8 @@ const Live = () => {
 
     const [reaction, setReactions] = useState<Reaction[]>([])
 
+    const broadcast = useBroadcastEvent();
+
     useInterval(() => {
         if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {
             setReactions((reactions) => reactions.concat([{
@@ -29,8 +31,24 @@ const Live = () => {
                 value: cursorState.reaction,
                 timestamp: Date.now(),
             }]))
+
+            broadcast({
+                x: cursor.x,
+                y: cursor.y,
+                value: cursorState.reaction,
+            })
         }
     }, 100)
+
+    useEventListener((eventData) => {
+        const event = eventData.event as ReactionEvent;
+
+        setReactions((reactions) => reactions.concat([{
+            point: { x: event.x, y: event.y },
+            value: event.value,
+            timestamp: Date.now(),
+        }]))
+    })
 
 
 
@@ -63,7 +81,7 @@ const Live = () => {
         updateMyPresence({ cursor: { x, y } })
         setCursorState((state: CursorState) => cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: true } : state
         );
-    }, [cursorState.mode, setCursorState])
+    }, [cursorState.mode, setCursorState, updateMyPresence])
 
     const handlePointerUp = useCallback((event: React.PointerEvent) => {
         setCursorState((state: CursorState) => cursorState.mode === CursorMode.Reaction ? { ...state, isPressed: true } : state);
