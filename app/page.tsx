@@ -6,7 +6,7 @@ import Live from "@/components/Live";
 import Navbar from "@/components/Navbar";
 import RightSidebar from "@/components/RightSidebar";
 import { ChangeEvent, use, useEffect, useRef, useState } from "react";
-import { handleCanvasMouseDown, handleResize, initializeFabric } from "@/lib/canvas";
+import { handleCanvasMouseDown, handleCanvaseMouseMove, handleResize, initializeFabric } from "@/lib/canvas";
 import { ActiveElement } from "@/types/type";
 import { useMutation, useStorage } from "@/liveblocks.config";
 
@@ -61,6 +61,20 @@ export default function Page() {
         selectedShapeRef
       })
     })
+
+    canvas.on('mouse:move', (options) => {
+      handleCanvaseMouseMove({
+        options,
+        canvas,
+        isDrawing,
+        shapeRef,
+        selectedShapeRef,
+        syncShapeInStorage
+      })
+    })
+
+
+
     window.addEventListener('resize', () => {
       handleResize({ fabricRef })
     })
