@@ -6,7 +6,7 @@ import Live from "@/components/Live";
 import Navbar from "@/components/Navbar";
 import RightSidebar from "@/components/RightSidebar";
 import { ChangeEvent, use, useEffect, useRef, useState } from "react";
-import { handleCanvasMouseDown, handleCanvaseMouseMove, handleResize, initializeFabric } from "@/lib/canvas";
+import { handleCanvasMouseDown, handleCanvaseMouseMove, handleCanvasMouseUp, handleResize, initializeFabric, renderCanvas, handleCanvasObjectModified } from "@/lib/canvas";
 import { ActiveElement } from "@/types/type";
 import { useMutation, useStorage } from "@/liveblocks.config";
 
@@ -17,6 +17,7 @@ export default function Page() {
   const isDrawing = useRef(false);
   const shapeRef = useRef<fabric.Object | null>(null);
   const selectedShapeRef = useRef<string | null>('rectangle');
+  const activeObjectRef = useRef<fabric.Object | null>(null);
 
   const canvasObjects = useStorage((root) => root.canvasObjects)
 
@@ -73,14 +74,39 @@ export default function Page() {
       })
     })
 
+    canvas.on('mouse:up', (options) => {
+      handleCanvasMouseUp({
+        canvas,
+        isDrawing,
+        shapeRef,
+        selectedShapeRef,
+        syncShapeInStorage,
+        setActiveElement,
+        activeObjectRef,
+      })
+    })
 
+    canvas.on("object:modified", (options) => {
+      handleCanvasObjectModified({
+        options,
+        syncShapeInStorage
+
+      })
+    })
 
     window.addEventListener('resize', () => {
       handleResize({ fabricRef })
     })
   }, []);
 
+  useEffect(() => {
+    renderCanvas({
+      fabricRef,
+      canvasObjects,
+      activeObjectRef
 
+    })
+  }, [canvasObjects])
 
 
   return (
